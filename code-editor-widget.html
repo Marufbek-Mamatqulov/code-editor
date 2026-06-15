@@ -1,0 +1,478 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Kod Muharrir</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    background: #f5f5f5;
+    padding: 16px;
+  }
+
+  .editor-wrap {
+    background: #fff;
+    border: 1px solid #e0e0e0;
+    border-radius: 10px;
+    overflow: hidden;
+    max-width: 860px;
+    margin: 0 auto;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+  }
+
+  /* Toolbar */
+  .toolbar {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 14px;
+    background: #1e1e2e;
+    border-bottom: 1px solid #2d2d3f;
+  }
+
+  .toolbar select {
+    background: #2d2d3f;
+    color: #cdd6f4;
+    border: 1px solid #45475a;
+    border-radius: 6px;
+    padding: 5px 10px;
+    font-size: 13px;
+    cursor: pointer;
+    outline: none;
+  }
+
+  .toolbar select:hover { border-color: #89b4fa; }
+
+  .lang-badge {
+    font-size: 11px;
+    font-weight: 600;
+    padding: 3px 8px;
+    border-radius: 4px;
+    background: #313244;
+    color: #89b4fa;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+  }
+
+  .spacer { flex: 1; }
+
+  .btn-run {
+    background: #a6e3a1;
+    color: #1e1e2e;
+    border: none;
+    border-radius: 6px;
+    padding: 6px 16px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    transition: background 0.15s, transform 0.1s;
+  }
+  .btn-run:hover { background: #94d894; }
+  .btn-run:active { transform: scale(0.97); }
+
+  .btn-clear {
+    background: transparent;
+    color: #6c7086;
+    border: 1px solid #45475a;
+    border-radius: 6px;
+    padding: 6px 12px;
+    font-size: 13px;
+    cursor: pointer;
+    transition: color 0.15s, border-color 0.15s;
+  }
+  .btn-clear:hover { color: #cdd6f4; border-color: #6c7086; }
+
+  /* Code area */
+  .code-area {
+    background: #1e1e2e;
+    padding: 14px 16px;
+  }
+
+  .code-area textarea {
+    width: 100%;
+    min-height: 200px;
+    background: transparent;
+    color: #cdd6f4;
+    border: none;
+    outline: none;
+    font-family: 'Fira Code', 'Cascadia Code', 'Consolas', monospace;
+    font-size: 14px;
+    line-height: 1.6;
+    resize: vertical;
+    tab-size: 2;
+    white-space: pre;
+    overflow-wrap: normal;
+    overflow-x: auto;
+  }
+
+  .code-area textarea::placeholder { color: #45475a; }
+
+  /* Output */
+  .output-section {
+    border-top: 1px solid #e0e0e0;
+  }
+
+  .output-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 8px 14px;
+    background: #f9f9fb;
+    border-bottom: 1px solid #e8e8ee;
+  }
+
+  .output-label {
+    font-size: 12px;
+    font-weight: 600;
+    color: #6b7280;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  .status-dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background: #d1d5db;
+    display: inline-block;
+    margin-right: 6px;
+    transition: background 0.2s;
+  }
+  .status-dot.ok   { background: #a6e3a1; }
+  .status-dot.err  { background: #f38ba8; }
+  .status-dot.run  { background: #fab387; animation: blink 0.6s infinite alternate; }
+
+  @keyframes blink { from { opacity: 1; } to { opacity: 0.3; } }
+
+  /* Preview iframe (HTML/CSS mode) */
+  #preview-frame {
+    width: 100%;
+    min-height: 180px;
+    border: none;
+    display: block;
+    background: #fff;
+  }
+
+  /* JS console output */
+  #js-output {
+    padding: 12px 16px;
+    font-family: 'Fira Code', 'Cascadia Code', 'Consolas', monospace;
+    font-size: 13px;
+    line-height: 1.7;
+    color: #374151;
+    min-height: 60px;
+    white-space: pre-wrap;
+    word-break: break-word;
+    background: #fafafa;
+  }
+
+  #js-output .log-line   { color: #374151; }
+  #js-output .error-line { color: #dc2626; }
+  #js-output .warn-line  { color: #d97706; }
+  #js-output .empty-msg  { color: #9ca3af; font-style: italic; }
+
+  /* Tab switcher (JS mode shows Console tab) */
+  .tab-bar {
+    display: flex;
+    gap: 0;
+    background: #f9f9fb;
+    border-bottom: 1px solid #e8e8ee;
+  }
+  .tab-btn {
+    padding: 7px 16px;
+    font-size: 12px;
+    font-weight: 600;
+    color: #9ca3af;
+    border: none;
+    background: transparent;
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+    transition: color 0.15s, border-color 0.15s;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+  }
+  .tab-btn.active {
+    color: #4f46e5;
+    border-bottom-color: #4f46e5;
+  }
+
+  /* Hint bar */
+  .hint-bar {
+    padding: 8px 16px;
+    background: #f0f9ff;
+    border-top: 1px solid #bae6fd;
+    font-size: 12px;
+    color: #0369a1;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+</style>
+</head>
+<body>
+
+<div class="editor-wrap">
+
+  <!-- Toolbar -->
+  <div class="toolbar">
+    <span class="lang-badge" id="lang-badge">HTML</span>
+    <select id="lang-select" onchange="switchLang(this.value)">
+      <option value="html">HTML / CSS</option>
+      <option value="js">JavaScript</option>
+    </select>
+    <div class="spacer"></div>
+    <button class="btn-clear" onclick="clearEditor()">Tozalash</button>
+    <button class="btn-run" onclick="runCode()">
+      ▶ Ishga tushirish
+    </button>
+  </div>
+
+  <!-- Code area -->
+  <div class="code-area">
+    <textarea id="code-input" spellcheck="false"
+      placeholder="Kodingizni shu yerga yozing..."
+      onkeydown="handleTab(event)"></textarea>
+  </div>
+
+  <!-- Output section -->
+  <div class="output-section">
+
+    <!-- Tab bar (JS mode only) -->
+    <div class="tab-bar" id="tab-bar" style="display:none">
+      <button class="tab-btn active" id="tab-console" onclick="showTab('console')">Konsol</button>
+    </div>
+
+    <!-- Output header (HTML mode) -->
+    <div class="output-header" id="output-header">
+      <span>
+        <span class="status-dot" id="status-dot"></span>
+        <span class="output-label">Natija</span>
+      </span>
+      <span style="font-size:12px; color:#9ca3af;" id="status-text">Hali ishga tushirilmagan</span>
+    </div>
+
+    <!-- HTML preview -->
+    <iframe id="preview-frame" sandbox="allow-scripts allow-same-origin"></iframe>
+
+    <!-- JS console -->
+    <div id="js-output" style="display:none">
+      <span class="empty-msg">Konsolda natija shu yerda chiqadi...</span>
+    </div>
+
+  </div>
+
+  <!-- Hint bar -->
+  <div class="hint-bar">
+    💡 <strong>Tab</strong> — 2 bo'sh joy qo'shadi &nbsp;|&nbsp;
+    <strong>Ctrl + Enter</strong> — ishga tushiradi
+  </div>
+
+</div>
+
+<script>
+// ── Default starter kods ───────────────────────────────────────────
+const defaults = {
+  html: `<!DOCTYPE html>
+<html lang="uz">
+<head>
+  <meta charset="UTF-8">
+  <title>Mening sahifam</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      margin: 0;
+      background: #f0f4ff;
+    }
+    h1 {
+      color: #4f46e5;
+      font-size: 2rem;
+    }
+  </style>
+</head>
+<body>
+  <h1>Salom, Dunyo! 👋</h1>
+</body>
+</html>`,
+
+  js: `// JavaScript misoli
+const numbers = [1, 2, 3, 4, 5];
+
+const doubled = numbers.map(n => n * 2);
+console.log("Ikkilangan:", doubled);
+
+const sum = numbers.reduce((a, b) => a + b, 0);
+console.log("Yig'indisi:", sum);
+
+// Shartli tekshirish
+if (sum > 10) {
+  console.log("Yig'indi 10 dan katta!");
+} else {
+  console.warn("Yig'indi 10 dan kichik.");
+}`
+};
+
+// ── State ──────────────────────────────────────────────────────────
+let currentLang = 'html';
+const saved = { html: defaults.html, js: defaults.js };
+
+// ── Init ───────────────────────────────────────────────────────────
+document.getElementById('code-input').value = defaults.html;
+
+// Ctrl+Enter shortcut
+document.getElementById('code-input').addEventListener('keydown', e => {
+  if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') { e.preventDefault(); runCode(); }
+});
+
+// ── Switch language ────────────────────────────────────────────────
+function switchLang(lang) {
+  saved[currentLang] = document.getElementById('code-input').value;
+  currentLang = lang;
+
+  const badge = document.getElementById('lang-badge');
+  const tabBar = document.getElementById('tab-bar');
+  const outHeader = document.getElementById('output-header');
+  const frame = document.getElementById('preview-frame');
+  const jsOut = document.getElementById('js-output');
+
+  document.getElementById('code-input').value = saved[lang];
+
+  if (lang === 'html') {
+    badge.textContent = 'HTML';
+    badge.style.color = '#fab387';
+    tabBar.style.display = 'none';
+    outHeader.style.display = 'flex';
+    frame.style.display = 'block';
+    jsOut.style.display = 'none';
+    resetStatus();
+    frame.srcdoc = '';
+  } else {
+    badge.textContent = 'JS';
+    badge.style.color = '#a6e3a1';
+    tabBar.style.display = 'flex';
+    outHeader.style.display = 'none';
+    frame.style.display = 'none';
+    jsOut.style.display = 'block';
+    jsOut.innerHTML = '<span class="empty-msg">Konsolda natija shu yerda chiqadi...</span>';
+  }
+}
+
+// ── Run code ───────────────────────────────────────────────────────
+function runCode() {
+  const code = document.getElementById('code-input').value.trim();
+  if (!code) return;
+
+  if (currentLang === 'html') runHTML(code);
+  else runJS(code);
+}
+
+function runHTML(code) {
+  setStatus('run', 'Ishga tushirilmoqda...');
+  const frame = document.getElementById('preview-frame');
+  frame.srcdoc = code;
+  frame.onload = () => setStatus('ok', 'Muvaffaqiyatli');
+  frame.onerror = () => setStatus('err', 'Xatolik yuz berdi');
+}
+
+function runJS(code) {
+  const out = document.getElementById('js-output');
+  out.innerHTML = '';
+  const lines = [];
+
+  // Override console methods
+  const origLog   = console.log;
+  const origWarn  = console.warn;
+  const origError = console.error;
+
+  console.log   = (...args) => { lines.push({ t: 'log',   v: args.map(stringify).join(' ') }); origLog(...args); };
+  console.warn  = (...args) => { lines.push({ t: 'warn',  v: args.map(stringify).join(' ') }); origWarn(...args); };
+  console.error = (...args) => { lines.push({ t: 'error', v: args.map(stringify).join(' ') }); origError(...args); };
+
+  try {
+    // eslint-disable-next-line no-new-func
+    new Function(code)();
+  } catch (err) {
+    lines.push({ t: 'error', v: '⛔ ' + err.toString() });
+  } finally {
+    console.log   = origLog;
+    console.warn  = origWarn;
+    console.error = origError;
+  }
+
+  if (lines.length === 0) {
+    out.innerHTML = '<span class="empty-msg">Hech narsa chiqmadi. console.log() ishlating.</span>';
+    return;
+  }
+
+  lines.forEach(({ t, v }) => {
+    const el = document.createElement('div');
+    el.className = t === 'error' ? 'error-line' : t === 'warn' ? 'warn-line' : 'log-line';
+    el.textContent = v;
+    out.appendChild(el);
+  });
+}
+
+function stringify(val) {
+  if (typeof val === 'object' && val !== null) {
+    try { return JSON.stringify(val, null, 2); } catch { return String(val); }
+  }
+  return String(val);
+}
+
+// ── Helpers ────────────────────────────────────────────────────────
+function resetStatus() {
+  setStatus('', 'Hali ishga tushirilmagan');
+}
+
+function setStatus(type, text) {
+  const dot = document.getElementById('status-dot');
+  const txt = document.getElementById('status-text');
+  dot.className = 'status-dot' + (type ? ' ' + type : '');
+  txt.textContent = text;
+}
+
+function clearEditor() {
+  document.getElementById('code-input').value = '';
+  if (currentLang === 'html') {
+    document.getElementById('preview-frame').srcdoc = '';
+    resetStatus();
+  } else {
+    const out = document.getElementById('js-output');
+    out.innerHTML = '<span class="empty-msg">Konsolda natija shu yerda chiqadi...</span>';
+  }
+  document.getElementById('code-input').focus();
+}
+
+function handleTab(e) {
+  if (e.key !== 'Tab') return;
+  e.preventDefault();
+  const ta = e.target;
+  const s = ta.selectionStart, end = ta.selectionEnd;
+  ta.value = ta.value.substring(0, s) + '  ' + ta.value.substring(end);
+  ta.selectionStart = ta.selectionEnd = s + 2;
+}
+
+function showTab(tab) {
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('tab-' + tab).classList.add('active');
+}
+
+// ── Auto-resize textarea ───────────────────────────────────────────
+const ta = document.getElementById('code-input');
+ta.addEventListener('input', () => {
+  ta.style.height = 'auto';
+  ta.style.height = Math.max(200, ta.scrollHeight) + 'px';
+});
+</script>
+
+</body>
+</html>
