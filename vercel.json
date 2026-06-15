@@ -1,11 +1,5 @@
 {
-  "buildCommand": "",
-  "framework": "html",
   "public": ".",
-  "rewrites": [
-    {
-      "source": "/",
-      "destination": "/code-editor-widget.html"
-    }
-  ]
+  "buildCommand": "",
+  "outputDirectory": "."
 }
