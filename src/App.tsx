@@ -1,13 +1,8 @@
-import React, { useState } from 'react'
+import React from 'react'
 import CodeEditor from './components/CodeEditor'
-import './App.css'
 
 function App() {
-  return (
-    <div className="app-container">
-      <CodeEditor />
-    </div>
-  )
+  return <CodeEditor />
 }
 
 export default App

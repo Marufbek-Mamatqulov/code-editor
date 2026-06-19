@@ -4,475 +4,710 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Kod Muharrir</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/monaco-editor@0.44.0/min/vs/editor/editor.main.css">
 <style>
-  * { box-sizing: border-box; margin: 0; padding: 0; }
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { height: 100%; background: #1e1e2e; overflow: hidden; }
 
-  body {
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-    background: #f5f5f5;
-    padding: 16px;
-  }
+/* ── Root ── */
+#app {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  color: #cdd6f4;
+}
 
-  .editor-wrap {
-    background: #fff;
-    border: 1px solid #e0e0e0;
-    border-radius: 10px;
-    overflow: hidden;
-    max-width: 860px;
-    margin: 0 auto;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.06);
-  }
+/* ── Topbar ── */
+#topbar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 0 14px;
+  height: 46px;
+  background: #181825;
+  border-bottom: 1px solid #313244;
+  flex-shrink: 0;
+}
+#logo {
+  font-size: 13px;
+  font-weight: 700;
+  color: #89b4fa;
+  font-family: 'Fira Code', monospace;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+#lang-tabs {
+  display: flex;
+  flex: 1;
+  overflow-x: auto;
+  scrollbar-width: none;
+  gap: 0;
+  align-items: stretch;
+  height: 46px;
+}
+#lang-tabs::-webkit-scrollbar { display: none; }
+.lt {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 0 11px;
+  font-size: 11.5px;
+  font-weight: 500;
+  color: #6c7086;
+  background: transparent;
+  border: none;
+  border-bottom: 2px solid transparent;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: color .15s;
+  flex-shrink: 0;
+}
+.lt:hover { color: #cdd6f4; background: rgba(255,255,255,.03); }
+.lt.active { color: #cdd6f4; }
+.lt-icon { font-size: 14px; }
+.lt-name { font-size: 11.5px; }
 
-  /* Toolbar */
-  .toolbar {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    padding: 10px 14px;
-    background: #1e1e2e;
-    border-bottom: 1px solid #2d2d3f;
-  }
+#actions { display: flex; align-items: center; gap: 6px; flex-shrink: 0; }
+.btn-icon {
+  display: flex; align-items: center; justify-content: center;
+  width: 30px; height: 30px;
+  background: transparent;
+  border: 1px solid #45475a;
+  border-radius: 6px;
+  color: #6c7086;
+  cursor: pointer;
+  font-size: 13px;
+  transition: color .15s, border-color .15s;
+}
+.btn-icon:hover { color: #cdd6f4; border-color: #6c7086; }
+#btn-run {
+  display: flex; align-items: center; gap: 6px;
+  padding: 0 16px; height: 30px;
+  background: #a6e3a1; color: #1e1e2e;
+  border: none; border-radius: 6px;
+  font-size: 12.5px; font-weight: 700;
+  cursor: pointer; white-space: nowrap;
+  transition: background .15s, opacity .15s;
+}
+#btn-run:hover { background: #94d894; }
+#btn-run:disabled { opacity: .7; cursor: not-allowed; background: #313244; color: #cdd6f4; }
 
-  .toolbar select {
-    background: #2d2d3f;
-    color: #cdd6f4;
-    border: 1px solid #45475a;
-    border-radius: 6px;
-    padding: 5px 10px;
-    font-size: 13px;
-    cursor: pointer;
-    outline: none;
-  }
+/* ── Main split ── */
+#main {
+  display: flex;
+  flex: 1;
+  overflow: hidden;
+  min-height: 0;
+}
+#editor-pane {
+  flex: 0 0 62%;
+  min-width: 0;
+  border-right: 1px solid #313244;
+  position: relative;
+}
+#editor-container { width: 100%; height: 100%; }
 
-  .toolbar select:hover { border-color: #89b4fa; }
+/* ── Output pane ── */
+#out-pane {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  background: #11111b;
+}
+#out-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 12px;
+  height: 36px;
+  background: #181825;
+  border-bottom: 1px solid #313244;
+  flex-shrink: 0;
+}
+#out-tabs { display: flex; height: 36px; align-items: stretch; }
+.ot {
+  display: flex; align-items: center;
+  padding: 0 12px;
+  font-size: 11.5px; font-weight: 600;
+  color: #6c7086;
+  background: transparent; border: none;
+  border-bottom: 2px solid transparent;
+  cursor: pointer; white-space: nowrap;
+  transition: color .15s, border-color .15s;
+}
+.ot:hover { color: #cdd6f4; }
+.ot.active { color: #89b4fa; border-bottom-color: #89b4fa; }
 
-  .lang-badge {
-    font-size: 11px;
-    font-weight: 600;
-    padding: 3px 8px;
-    border-radius: 4px;
-    background: #313244;
-    color: #89b4fa;
-    letter-spacing: 0.5px;
-    text-transform: uppercase;
-  }
+#out-meta { display: flex; align-items: center; gap: 6px; }
+.badge {
+  font-size: 10.5px; font-weight: 600;
+  padding: 2px 7px; border-radius: 4px;
+  font-family: 'Fira Code', monospace;
+}
+.badge-time { background: #313244; color: #9ca0b0; }
+.badge-ok   { background: #1c3a2a; color: #a6e3a1; }
+.badge-err  { background: #3a1c1c; color: #f38ba8; }
+#status-dot {
+  width: 8px; height: 8px; border-radius: 50%;
+  background: #45475a;
+  transition: background .2s;
+  flex-shrink: 0;
+}
+#status-dot.run { background: #fab387; animation: blink .7s ease-in-out infinite alternate; }
+#status-dot.ok  { background: #a6e3a1; }
+#status-dot.err { background: #f38ba8; }
+@keyframes blink { from{opacity:1} to{opacity:.2} }
 
-  .spacer { flex: 1; }
+#out-body { flex: 1; overflow: hidden; display: flex; flex-direction: column; }
 
-  .btn-run {
-    background: #a6e3a1;
-    color: #1e1e2e;
-    border: none;
-    border-radius: 6px;
-    padding: 6px 16px;
-    font-size: 13px;
-    font-weight: 600;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    transition: background 0.15s, transform 0.1s;
-  }
-  .btn-run:hover { background: #94d894; }
-  .btn-run:active { transform: scale(0.97); }
+/* HTML preview */
+#html-frame {
+  flex: 1; width: 100%;
+  border: none; background: #fff;
+  display: none;
+}
 
-  .btn-clear {
-    background: transparent;
-    color: #6c7086;
-    border: 1px solid #45475a;
-    border-radius: 6px;
-    padding: 6px 12px;
-    font-size: 13px;
-    cursor: pointer;
-    transition: color 0.15s, border-color 0.15s;
-  }
-  .btn-clear:hover { color: #cdd6f4; border-color: #6c7086; }
+/* Console */
+#console {
+  flex: 1; padding: 10px 0;
+  overflow-y: auto; overflow-x: hidden;
+  font-family: 'Fira Code', Consolas, monospace;
+  font-size: 12.5px; line-height: 1.65;
+  scrollbar-width: thin;
+  scrollbar-color: #313244 transparent;
+}
+#console::-webkit-scrollbar { width: 6px; }
+#console::-webkit-scrollbar-thumb { background: #313244; border-radius: 3px; }
 
-  /* Code area */
-  .code-area {
-    background: #1e1e2e;
-    padding: 14px 16px;
-  }
+.chint {
+  padding: 12px 16px;
+  font-size: 12px; color: #45475a;
+  font-style: italic;
+  font-family: -apple-system, sans-serif;
+  display: flex; align-items: center; gap: 8px;
+}
+.chint kbd {
+  background: #313244; color: #cdd6f4;
+  font-size: 11px; padding: 1px 5px;
+  border-radius: 3px; font-style: normal;
+  font-family: monospace; font-weight: 600;
+}
 
-  .code-area textarea {
-    width: 100%;
-    min-height: 200px;
-    background: transparent;
-    color: #cdd6f4;
-    border: none;
-    outline: none;
-    font-family: 'Fira Code', 'Cascadia Code', 'Consolas', monospace;
-    font-size: 14px;
-    line-height: 1.6;
-    resize: vertical;
-    tab-size: 2;
-    white-space: pre;
-    overflow-wrap: normal;
-    overflow-x: auto;
-  }
+.line {
+  display: flex; align-items: flex-start;
+  padding: 1px 16px; gap: 10px;
+}
+.line:hover { background: rgba(255,255,255,.03); }
+.lg { flex-shrink:0; width:14px; font-size:11px; text-align:center; opacity:.5; padding-top:1px; }
+.lt2 {
+  flex:1; white-space:pre-wrap; word-break:break-word;
+  margin:0; font-family:inherit; font-size:inherit;
+}
+.stdout,.log { color: #cdd6f4; }
+.stderr,.error { color: #f38ba8; }
+.warn { color: #fab387; }
+.info { color: #89dceb; }
+.system { color: #45475a; font-style: italic; }
 
-  .code-area textarea::placeholder { color: #45475a; }
+/* Stdin */
+#stdin-wrap {
+  flex: 1; display: flex; flex-direction: column;
+  padding: 12px; gap: 8px; display: none;
+}
+#stdin-label {
+  font-size: 11.5px; color: #6c7086;
+  font-family: -apple-system, sans-serif;
+}
+#stdin-label code {
+  background: #313244; color: #89b4fa;
+  padding: 1px 5px; border-radius: 3px;
+  font-family: 'Fira Code', monospace;
+}
+#stdin-input {
+  flex: 1; background: #1e1e2e; color: #cdd6f4;
+  border: 1px solid #313244; border-radius: 8px;
+  padding: 10px 12px;
+  font-family: 'Fira Code', monospace; font-size: 13px;
+  line-height: 1.6; resize: none; outline: none;
+  transition: border-color .15s;
+}
+#stdin-input:focus { border-color: #89b4fa; }
+#stdin-input::placeholder { color: #45475a; }
 
-  /* Output */
-  .output-section {
-    border-top: 1px solid #e0e0e0;
-  }
+/* Statusbar */
+#statusbar {
+  display: flex; align-items: center;
+  justify-content: space-between;
+  padding: 0 12px; height: 26px;
+  background: #181825; border-top: 1px solid #313244;
+  flex-shrink: 0;
+}
+#sb-lang { font-size: 11px; font-weight: 600; }
+#sb-ver { font-size: 10px; opacity: .55; font-family: 'Fira Code', monospace; font-weight: 400; }
+#sb-state { font-size: 11px; display: flex; align-items: center; gap: 8px; }
+.s-idle { color: #45475a; } .s-run { color: #fab387; }
+.s-ok { color: #a6e3a1; } .s-err { color: #f38ba8; }
+.s-sec { color: #6c7086; }
 
-  .output-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 8px 14px;
-    background: #f9f9fb;
-    border-bottom: 1px solid #e8e8ee;
-  }
+/* Hintbar */
+#hintbar {
+  display: flex; align-items: center; gap: 20px;
+  padding: 0 16px; height: 28px;
+  background: #181825; border-top: 1px solid #313244;
+  flex-shrink: 0; overflow-x: auto; scrollbar-width: none;
+}
+#hintbar::-webkit-scrollbar { display: none; }
+#hintbar span { font-size: 11px; color: #45475a; white-space: nowrap; }
+#hintbar kbd {
+  background: #313244; color: #9ca0b0;
+  font-size: 10px; padding: 1px 5px;
+  border-radius: 3px; font-family: monospace;
+  font-weight: 600; border-bottom: 1px solid #45475a;
+}
 
-  .output-label {
-    font-size: 12px;
-    font-weight: 600;
-    color: #6b7280;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-  }
+/* Spinner */
+.spin {
+  display: inline-block;
+  width: 11px; height: 11px;
+  border: 2px solid rgba(255,255,255,.2);
+  border-top-color: currentColor;
+  border-radius: 50%;
+  animation: rot .65s linear infinite;
+}
+@keyframes rot { to { transform: rotate(360deg); } }
 
-  .status-dot {
-    width: 8px; height: 8px;
-    border-radius: 50%;
-    background: #d1d5db;
-    display: inline-block;
-    margin-right: 6px;
-    transition: background 0.2s;
-  }
-  .status-dot.ok   { background: #a6e3a1; }
-  .status-dot.err  { background: #f38ba8; }
-  .status-dot.run  { background: #fab387; animation: blink 0.6s infinite alternate; }
-
-  @keyframes blink { from { opacity: 1; } to { opacity: 0.3; } }
-
-  /* Preview iframe (HTML/CSS mode) */
-  #preview-frame {
-    width: 100%;
-    min-height: 180px;
-    border: none;
-    display: block;
-    background: #fff;
-  }
-
-  /* JS console output */
-  #js-output {
-    padding: 12px 16px;
-    font-family: 'Fira Code', 'Cascadia Code', 'Consolas', monospace;
-    font-size: 13px;
-    line-height: 1.7;
-    color: #374151;
-    min-height: 60px;
-    white-space: pre-wrap;
-    word-break: break-word;
-    background: #fafafa;
-  }
-
-  #js-output .log-line   { color: #374151; }
-  #js-output .error-line { color: #dc2626; }
-  #js-output .warn-line  { color: #d97706; }
-  #js-output .empty-msg  { color: #9ca3af; font-style: italic; }
-
-  /* Tab switcher (JS mode shows Console tab) */
-  .tab-bar {
-    display: flex;
-    gap: 0;
-    background: #f9f9fb;
-    border-bottom: 1px solid #e8e8ee;
-  }
-  .tab-btn {
-    padding: 7px 16px;
-    font-size: 12px;
-    font-weight: 600;
-    color: #9ca3af;
-    border: none;
-    background: transparent;
-    cursor: pointer;
-    border-bottom: 2px solid transparent;
-    transition: color 0.15s, border-color 0.15s;
-    text-transform: uppercase;
-    letter-spacing: 0.4px;
-  }
-  .tab-btn.active {
-    color: #4f46e5;
-    border-bottom-color: #4f46e5;
-  }
-
-  /* Hint bar */
-  .hint-bar {
-    padding: 8px 16px;
-    background: #f0f9ff;
-    border-top: 1px solid #bae6fd;
-    font-size: 12px;
-    color: #0369a1;
-    display: flex;
-    align-items: center;
-    gap: 6px;
-  }
-
+/* Responsive */
+@media (max-width: 700px) {
+  #main { flex-direction: column; }
+  #editor-pane { flex: 0 0 55%; border-right: none; border-bottom: 1px solid #313244; }
+  .lt-name { display: none; }
+  .lt { padding: 0 8px; }
+}
 </style>
 </head>
 <body>
+<div id="app">
+  <header id="topbar">
+    <div id="logo">&lt;/&gt; Kod Muharrir</div>
+    <nav id="lang-tabs"></nav>
+    <div id="actions">
+      <button class="btn-icon" id="btn-copy" title="Nusxa olish">📋</button>
+      <button class="btn-icon" id="btn-reset" title="Tiklash">↺</button>
+      <button id="btn-run">▶ Ishga tushirish</button>
+    </div>
+  </header>
 
-<div class="editor-wrap">
-
-  <!-- Toolbar -->
-  <div class="toolbar">
-    <span class="lang-badge" id="lang-badge">HTML</span>
-    <select id="lang-select" onchange="switchLang(this.value)">
-      <option value="html">HTML / CSS</option>
-      <option value="js">JavaScript</option>
-    </select>
-    <div class="spacer"></div>
-    <button class="btn-clear" onclick="clearEditor()">Tozalash</button>
-    <button class="btn-run" onclick="runCode()">
-      ▶ Ishga tushirish
-    </button>
-  </div>
-
-  <!-- Code area -->
-  <div class="code-area">
-    <textarea id="code-input" spellcheck="false"
-      placeholder="Kodingizni shu yerga yozing..."
-      onkeydown="handleTab(event)"></textarea>
-  </div>
-
-  <!-- Output section -->
-  <div class="output-section">
-
-    <!-- Tab bar (JS mode only) -->
-    <div class="tab-bar" id="tab-bar" style="display:none">
-      <button class="tab-btn active" id="tab-console" onclick="showTab('console')">Konsol</button>
+  <div id="main">
+    <div id="editor-pane">
+      <div id="editor-container"></div>
     </div>
 
-    <!-- Output header (HTML mode) -->
-    <div class="output-header" id="output-header">
-      <span>
-        <span class="status-dot" id="status-dot"></span>
-        <span class="output-label">Natija</span>
-      </span>
-      <span style="font-size:12px; color:#9ca3af;" id="status-text">Hali ishga tushirilmagan</span>
+    <div id="out-pane">
+      <div id="out-header">
+        <div id="out-tabs">
+          <button class="ot active" data-tab="output" id="tab-output">📤 Chiqish</button>
+          <button class="ot" data-tab="stdin" id="tab-stdin" style="display:none">📥 Kirish</button>
+        </div>
+        <div id="out-meta">
+          <span class="badge badge-time" id="badge-time" style="display:none"></span>
+          <span class="badge" id="badge-exit" style="display:none"></span>
+          <span id="status-dot"></span>
+        </div>
+      </div>
+
+      <div id="out-body">
+        <iframe id="html-frame" sandbox="allow-scripts allow-modals allow-forms allow-popups" title="Ko'rinish"></iframe>
+        <div id="console"><p class="chint">▶ Ishga tushirish tugmasini bosing yoki <kbd>Ctrl+Enter</kbd></p></div>
+        <div id="stdin-wrap">
+          <p id="stdin-label">Dastur uchun stdin (<code>input()</code> / <code>scanf</code> / <code>Scanner</code>):</p>
+          <textarea id="stdin-input" placeholder="Har bir qator — bitta kiritish bo'ladi…" spellcheck="false"></textarea>
+        </div>
+      </div>
+
+      <div id="statusbar">
+        <span id="sb-lang"></span>
+        <span id="sb-state"><span class="s-idle">Tayyor</span></span>
+      </div>
     </div>
-
-    <!-- HTML preview -->
-    <iframe id="preview-frame" sandbox="allow-scripts allow-same-origin"></iframe>
-
-    <!-- JS console -->
-    <div id="js-output" style="display:none">
-      <span class="empty-msg">Konsolda natija shu yerda chiqadi...</span>
-    </div>
-
   </div>
 
-  <!-- Hint bar -->
-  <div class="hint-bar">
-    💡 <strong>Tab</strong> — 2 bo'sh joy qo'shadi &nbsp;|&nbsp;
-    <strong>Ctrl + Enter</strong> — ishga tushiradi
-  </div>
-
+  <footer id="hintbar">
+    <span><kbd>Ctrl</kbd>+<kbd>Enter</kbd> ishga tushiradi</span>
+    <span><kbd>Tab</kbd> 2 bo'sh joy</span>
+    <span><kbd>Ctrl</kbd>+<kbd>Z</kbd> bekor qiladi</span>
+    <span><kbd>Ctrl</kbd>+<kbd>/</kbd> izoh</span>
+  </footer>
 </div>
 
+<script src="https://cdn.jsdelivr.net/npm/monaco-editor@0.44.0/min/vs/loader.js"></script>
 <script>
-// ── Default starter kods ───────────────────────────────────────────
-const defaults = {
-  html: `<!DOCTYPE html>
-<html lang="uz">
-<head>
-  <meta charset="UTF-8">
-  <title>Mening sahifam</title>
-  <style>
-    body {
-      font-family: sans-serif;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      height: 100vh;
-      margin: 0;
-      background: #f0f4ff;
-    }
-    h1 {
-      color: #4f46e5;
-      font-size: 2rem;
-    }
-  </style>
-</head>
-<body>
-  <h1>Salom, Dunyo! 👋</h1>
-</body>
-</html>`,
+// ── Language definitions ─────────────────────────────────────────────────────
+const LANGS = [
+  { id:'html',       label:'HTML/CSS',    monaco:'html',       color:'#e34c26', icon:'🌐', mode:'html',
+    code:`<!DOCTYPE html>\n<html lang="uz">\n<head>\n  <meta charset="UTF-8">\n  <style>\n    body{font-family:sans-serif;display:flex;align-items:center;justify-content:center;min-height:100vh;margin:0;background:linear-gradient(135deg,#667eea,#764ba2);}\n    .card{background:#fff;padding:40px 50px;border-radius:20px;text-align:center;box-shadow:0 20px 60px rgba(0,0,0,.25);}\n    h1{color:#4f46e5;margin:0 0 8px;}\n    .n{font-size:3rem;font-weight:700;color:#4f46e5;margin:16px 0;}\n    button{padding:10px 24px;background:#4f46e5;color:#fff;border:none;border-radius:10px;font-size:15px;cursor:pointer;}\n    button:hover{background:#4338ca;}\n  </style>\n</head>\n<body>\n  <div class="card">\n    <h1>Salom, Dunyo! 👋</h1>\n    <div class="n" id="n">0</div>\n    <button onclick="document.getElementById('n').textContent=+document.getElementById('n').textContent+1">+1 qo'shish</button>\n  </div>\n</body>\n</html>` },
+  { id:'javascript', label:'JavaScript',  monaco:'javascript', color:'#f7df1e', icon:'🟨', mode:'js',
+    code:`// JavaScript misoli\nconst students = [\n  { name: 'Ali',    grade: 85 },\n  { name: 'Fatima', grade: 92 },\n  { name: 'Jasur',  grade: 78 },\n  { name: 'Malika', grade: 95 },\n];\n\nconst avg = students.reduce((s,x)=>s+x.grade,0)/students.length;\nconsole.log("O'rtacha ball:", avg.toFixed(1));\n\nconsole.log("\\nReyting:");\n[...students].sort((a,b)=>b.grade-a.grade)\n  .forEach((s,i)=>console.log(\`  \${i+1}. \${s.name.padEnd(8)} \${s.grade}\`));` },
+  { id:'typescript', label:'TypeScript',  monaco:'typescript', color:'#3178c6', icon:'🔷', mode:'piston', piston:'typescript',
+    code:`interface Student { name: string; grade: number; }\n\nfunction top<T extends Student>(arr: T[], min: number): T[] {\n  return [...arr].filter(s=>s.grade>=min).sort((a,b)=>b.grade-a.grade);\n}\n\nconst students: Student[] = [\n  {name:'Ali',grade:85},{name:'Fatima',grade:92},\n  {name:'Jasur',grade:78},{name:'Malika',grade:95},\n];\n\nconst avg = students.reduce((s,x)=>s+x.grade,0)/students.length;\nconsole.log(\`O'rtacha: \${avg.toFixed(1)}\\n\`);\ntop(students,80).forEach((s,i)=>console.log(\`\${i+1}. \${s.name} — \${s.grade}\`));` },
+  { id:'python',     label:'Python',      monaco:'python',     color:'#3572a5', icon:'🐍', mode:'piston', piston:'python',
+    code:`def status(g):\n    if g>=90: return "A'lo"\n    if g>=75: return "Yaxshi"\n    return "Qoniqarli"\n\nstudents = [('Ali',85),('Fatima',92),('Jasur',78),('Malika',95),('Bobur',67)]\navg = sum(g for _,g in students)/len(students)\nprint(f"O'rtacha: {avg:.1f}\\n")\nprint("Reyting:")\nfor i,(n,g) in enumerate(sorted(students,key=lambda x:-x[1]),1):\n    print(f"  {i}. {n:<8} {g}  ({status(g)})")` },
+  { id:'java',       label:'Java',        monaco:'java',       color:'#b07219', icon:'☕', mode:'piston', piston:'java',
+    code:`import java.util.*;\npublic class Main {\n    public static void main(String[] args) {\n        int[] grades = {85,92,78,95,67,88,72};\n        int sum=0;\n        for(int g:grades) sum+=g;\n        System.out.printf("O'rtacha ball: %.1f%n",(double)sum/grades.length);\n        Arrays.sort(grades);\n        System.out.print("Tartiblangan: ");\n        for(int g:grades) System.out.print(g+" ");\n        System.out.println();\n        // Fibonacci\n        System.out.print("\\nFibonacci: ");\n        int a=0,b=1;\n        for(int i=0;i<10;i++){System.out.print(a+" ");int t=a+b;a=b;b=t;}\n    }\n}` },
+  { id:'c',          label:'C',           monaco:'c',          color:'#555555', icon:'⚙️', mode:'piston', piston:'c',
+    code:`#include <stdio.h>\n#include <math.h>\nint is_prime(int n){\n  if(n<2)return 0;\n  for(int i=2;i<=(int)sqrt(n);i++) if(n%i==0)return 0;\n  return 1;\n}\nint main(){\n  printf("Tub sonlar (2-50): ");\n  for(int i=2;i<=50;i++) if(is_prime(i)) printf("%d ",i);\n  int arr[]={64,34,25,12,22,11,90};\n  int n=sizeof(arr)/sizeof(arr[0]);\n  printf("\\nBoshlang'ich: ");for(int i=0;i<n;i++) printf("%d ",arr[i]);\n  for(int i=0;i<n-1;i++) for(int j=0;j<n-i-1;j++) if(arr[j]>arr[j+1]){int t=arr[j];arr[j]=arr[j+1];arr[j+1]=t;}\n  printf("\\nTartiblangan: ");for(int i=0;i<n;i++) printf("%d ",arr[i]);\n  printf("\\n");\n  return 0;\n}` },
+  { id:'cpp',        label:'C++',         monaco:'cpp',        color:'#f34b7d', icon:'🔩', mode:'piston', piston:'c++',
+    code:`#include <iostream>\n#include <vector>\n#include <algorithm>\nusing namespace std;\nint main(){\n  vector<pair<string,int>> s={{"Ali",85},{"Fatima",92},{"Jasur",78},{"Malika",95}};\n  double avg=0; for(auto&p:s)avg+=p.second; avg/=s.size();\n  cout<<"O'rtacha: "<<avg<<"\\n\\n";\n  sort(s.begin(),s.end(),[](auto&a,auto&b){return a.second>b.second;});\n  cout<<"Reyting:\\n";\n  for(int i=0;i<(int)s.size();i++)\n    cout<<"  "<<i+1<<". "<<s[i].first<<"  "<<s[i].second<<"\\n";\n}` },
+  { id:'go',         label:'Go',          monaco:'go',         color:'#00add8', icon:'🔵', mode:'piston', piston:'go',
+    code:`package main\nimport ("fmt";"sort")\ntype S struct{ Name string; Grade int }\nfunc main(){\n  s:=[]S{{"Ali",85},{"Fatima",92},{"Jasur",78},{"Malika",95},{"Bobur",67}}\n  t:=0; for _,x:=range s{t+=x.Grade}\n  fmt.Printf("O'rtacha: %.1f\\n\\n",float64(t)/float64(len(s)))\n  sort.Slice(s,func(i,j int)bool{return s[i].Grade>s[j].Grade})\n  fmt.Println("Reyting:")\n  for i,x:=range s{fmt.Printf("  %d. %-8s %d\\n",i+1,x.Name,x.Grade)}\n}` },
+  { id:'rust',       label:'Rust',        monaco:'rust',       color:'#dea584', icon:'🦀', mode:'piston', piston:'rust',
+    code:`fn main(){\n  let mut s=vec![("Ali",85i32),("Fatima",92),("Jasur",78),("Malika",95),("Bobur",67)];\n  let avg:f64=s.iter().map(|x|x.1 as f64).sum::<f64>()/s.len() as f64;\n  println!("O'rtacha: {avg:.1}\\n");\n  s.sort_unstable_by(|a,b|b.1.cmp(&a.1));\n  println!("Reyting:");\n  for (i,(n,g)) in s.iter().enumerate(){\n    println!("  {}. {:<8} {}",i+1,n,g);\n  }\n}` },
+  { id:'php',        label:'PHP',         monaco:'php',        color:'#4f5d95', icon:'🐘', mode:'piston', piston:'php',
+    code:`<?php\n$s=[['n'=>'Ali','g'=>85],['n'=>'Fatima','g'=>92],['n'=>'Jasur','g'=>78],['n'=>'Malika','g'=>95]];\n$avg=array_sum(array_column($s,'g'))/count($s);\nprintf("O'rtacha: %.1f\\n\\n",$avg);\nusort($s,fn($a,$b)=>$b['g']-$a['g']);\necho "Reyting:\\n";\nforeach($s as $i=>$x) printf("  %d. %-8s %d\\n",$i+1,$x['n'],$x['g']);` },
+  { id:'ruby',       label:'Ruby',        monaco:'ruby',       color:'#cc342d', icon:'💎', mode:'piston', piston:'ruby',
+    code:`s=[{n:'Ali',g:85},{n:'Fatima',g:92},{n:'Jasur',g:78},{n:'Malika',g:95},{n:'Bobur',g:67}]\navg=s.sum{|x|x[:g]}.to_f/s.size\nprintf("O'rtacha: %.1f\\n\\n",avg)\nputs "Reyting:"\ns.sort_by{|x|-x[:g]}.each_with_index{|x,i|printf("  %d. %-8s %d\\n",i+1,x[:n],x[:g])}` },
+  { id:'bash',       label:'Bash',        monaco:'shell',      color:'#89e051', icon:'📟', mode:'piston', piston:'bash',
+    code:`#!/bin/bash\necho "=== Bash misoli ==="\nfor i in {1..5}; do echo "  $i² = $((i*i))"; done\necho ""\nfruits=("olma" "banan" "gilos")\nfor f in "\${fruits[@]}"; do echo "  $f"; done\necho ""\ntext="Assalomu Alaykum"\necho "Matn: $text"\necho "Katta: \${text^^}"\necho "Uzunlik: \${#text}"` },
+];
 
-  js: `// JavaScript misoli
-const numbers = [1, 2, 3, 4, 5];
+const PISTON = 'https://emkc.org/api/v2/piston/execute';
 
-const doubled = numbers.map(n => n * 2);
-console.log("Ikkilangan:", doubled);
+// ── State ────────────────────────────────────────────────────────────────────
+let currentLang = LANGS[0];
+let running = false;
+let editor = null;
+let activeTab = 'output';
 
-const sum = numbers.reduce((a, b) => a + b, 0);
-console.log("Yig'indisi:", sum);
-
-// Shartli tekshirish
-if (sum > 10) {
-  console.log("Yig'indi 10 dan katta!");
-} else {
-  console.warn("Yig'indi 10 dan kichik.");
-}`
-};
-
-// ── State ──────────────────────────────────────────────────────────
-let currentLang = 'html';
-const saved = { html: defaults.html, js: defaults.js };
-
-// ── Init ───────────────────────────────────────────────────────────
-document.getElementById('code-input').value = defaults.html;
-
-// Ctrl+Enter shortcut
-document.getElementById('code-input').addEventListener('keydown', e => {
-  if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') { e.preventDefault(); runCode(); }
+// ── Build language tabs ──────────────────────────────────────────────────────
+const tabsEl = document.getElementById('lang-tabs');
+LANGS.forEach(l => {
+  const btn = document.createElement('button');
+  btn.className = 'lt' + (l.id === 'html' ? ' active' : '');
+  btn.dataset.id = l.id;
+  btn.innerHTML = `<span class="lt-icon">${l.icon}</span><span class="lt-name">${l.label}</span>`;
+  btn.style.borderBottomColor = l.id === 'html' ? l.color : 'transparent';
+  btn.style.color = l.id === 'html' ? l.color : '';
+  btn.onclick = () => switchLang(l);
+  tabsEl.appendChild(btn);
 });
 
-// ── Switch language ────────────────────────────────────────────────
-function switchLang(lang) {
-  saved[currentLang] = document.getElementById('code-input').value;
-  currentLang = lang;
-
-  const badge = document.getElementById('lang-badge');
-  const tabBar = document.getElementById('tab-bar');
-  const outHeader = document.getElementById('output-header');
-  const frame = document.getElementById('preview-frame');
-  const jsOut = document.getElementById('js-output');
-
-  document.getElementById('code-input').value = saved[lang];
-
-  if (lang === 'html') {
-    badge.textContent = 'HTML';
-    badge.style.color = '#fab387';
-    tabBar.style.display = 'none';
-    outHeader.style.display = 'flex';
-    frame.style.display = 'block';
-    jsOut.style.display = 'none';
-    resetStatus();
-    frame.srcdoc = '';
-  } else {
-    badge.textContent = 'JS';
-    badge.style.color = '#a6e3a1';
-    tabBar.style.display = 'flex';
-    outHeader.style.display = 'none';
-    frame.style.display = 'none';
-    jsOut.style.display = 'block';
-    jsOut.innerHTML = '<span class="empty-msg">Konsolda natija shu yerda chiqadi...</span>';
-  }
-}
-
-// ── Run code ───────────────────────────────────────────────────────
-function runCode() {
-  const code = document.getElementById('code-input').value.trim();
-  if (!code) return;
-
-  if (currentLang === 'html') runHTML(code);
-  else runJS(code);
-}
-
-function runHTML(code) {
-  setStatus('run', 'Ishga tushirilmoqda...');
-  const frame = document.getElementById('preview-frame');
-  frame.srcdoc = code;
-  frame.onload = () => setStatus('ok', 'Muvaffaqiyatli');
-  frame.onerror = () => setStatus('err', 'Xatolik yuz berdi');
-}
-
-function runJS(code) {
-  const out = document.getElementById('js-output');
-  out.innerHTML = '';
-  const lines = [];
-
-  // Override console methods
-  const origLog   = console.log;
-  const origWarn  = console.warn;
-  const origError = console.error;
-
-  console.log   = (...args) => { lines.push({ t: 'log',   v: args.map(stringify).join(' ') }); origLog(...args); };
-  console.warn  = (...args) => { lines.push({ t: 'warn',  v: args.map(stringify).join(' ') }); origWarn(...args); };
-  console.error = (...args) => { lines.push({ t: 'error', v: args.map(stringify).join(' ') }); origError(...args); };
-
-  try {
-    // eslint-disable-next-line no-new-func
-    new Function(code)();
-  } catch (err) {
-    lines.push({ t: 'error', v: '⛔ ' + err.toString() });
-  } finally {
-    console.log   = origLog;
-    console.warn  = origWarn;
-    console.error = origError;
-  }
-
-  if (lines.length === 0) {
-    out.innerHTML = '<span class="empty-msg">Hech narsa chiqmadi. console.log() ishlating.</span>';
-    return;
-  }
-
-  lines.forEach(({ t, v }) => {
-    const el = document.createElement('div');
-    el.className = t === 'error' ? 'error-line' : t === 'warn' ? 'warn-line' : 'log-line';
-    el.textContent = v;
-    out.appendChild(el);
+function updateTabUI(l) {
+  document.querySelectorAll('.lt').forEach(b => {
+    const active = b.dataset.id === l.id;
+    b.classList.toggle('active', active);
+    b.style.borderBottomColor = active ? l.color : 'transparent';
+    b.style.color = active ? l.color : '';
   });
 }
 
-function stringify(val) {
-  if (typeof val === 'object' && val !== null) {
-    try { return JSON.stringify(val, null, 2); } catch { return String(val); }
+// ── Init Monaco ──────────────────────────────────────────────────────────────
+require.config({ paths: { 'vs': 'https://cdn.jsdelivr.net/npm/monaco-editor@0.44.0/min/vs' } });
+
+require(['vs/editor/editor.main'], function() {
+  editor = monaco.editor.create(document.getElementById('editor-container'), {
+    value: currentLang.code,
+    language: currentLang.monaco,
+    theme: 'vs-dark',
+    fontSize: 14,
+    fontFamily: "'Fira Code', 'Cascadia Code', Consolas, monospace",
+    fontLigatures: true,
+    minimap: { enabled: false },
+    scrollBeyondLastLine: false,
+    lineNumbers: 'on',
+    renderLineHighlight: 'line',
+    tabSize: 2,
+    wordWrap: 'off',
+    automaticLayout: true,
+    padding: { top: 14, bottom: 14 },
+    bracketPairColorization: { enabled: true },
+    scrollbar: { verticalScrollbarSize: 6, horizontalScrollbarSize: 6 },
+  });
+
+  editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.Enter, runCode);
+
+  updateStatusLang();
+});
+
+// ── Switch language ──────────────────────────────────────────────────────────
+function switchLang(l) {
+  currentLang = l;
+  if (editor) {
+    editor.setValue(l.code);
+    monaco.editor.setModelLanguage(editor.getModel(), l.monaco);
   }
-  return String(val);
-}
+  updateTabUI(l);
+  updateStatusLang();
+  resetOutput();
 
-// ── Helpers ────────────────────────────────────────────────────────
-function resetStatus() {
-  setStatus('', 'Hali ishga tushirilmagan');
-}
-
-function setStatus(type, text) {
-  const dot = document.getElementById('status-dot');
-  const txt = document.getElementById('status-text');
-  dot.className = 'status-dot' + (type ? ' ' + type : '');
-  txt.textContent = text;
-}
-
-function clearEditor() {
-  document.getElementById('code-input').value = '';
-  if (currentLang === 'html') {
-    document.getElementById('preview-frame').srcdoc = '';
-    resetStatus();
+  // Show/hide stdin tab
+  const stdinTab = document.getElementById('tab-stdin');
+  if (l.mode === 'piston') {
+    stdinTab.style.display = '';
   } else {
-    const out = document.getElementById('js-output');
-    out.innerHTML = '<span class="empty-msg">Konsolda natija shu yerda chiqadi...</span>';
+    stdinTab.style.display = 'none';
+    if (activeTab === 'stdin') showTab('output');
   }
-  document.getElementById('code-input').focus();
+
+  // Show correct output view
+  if (l.mode === 'html') {
+    document.querySelector('[data-tab="output"]').textContent = '🖥 Ko\'rinish';
+  } else {
+    document.querySelector('[data-tab="output"]').textContent = '📤 Chiqish';
+  }
+
+  document.getElementById('html-frame').style.display = 'none';
+  document.getElementById('html-frame').src = '';
+  document.getElementById('console').style.display = 'block';
+  document.getElementById('console').innerHTML = '<p class="chint">▶ Ishga tushirish tugmasini bosing yoki <kbd>Ctrl+Enter</kbd></p>';
 }
 
-function handleTab(e) {
-  if (e.key !== 'Tab') return;
-  e.preventDefault();
-  const ta = e.target;
-  const s = ta.selectionStart, end = ta.selectionEnd;
-  ta.value = ta.value.substring(0, s) + '  ' + ta.value.substring(end);
-  ta.selectionStart = ta.selectionEnd = s + 2;
+function updateStatusLang() {
+  const el = document.getElementById('sb-lang');
+  el.textContent = currentLang.icon + ' ' + currentLang.label;
+  el.style.color = currentLang.color;
 }
+
+// ── Tab switching ────────────────────────────────────────────────────────────
+document.querySelectorAll('.ot').forEach(btn => {
+  btn.onclick = () => showTab(btn.dataset.tab);
+});
 
 function showTab(tab) {
-  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-  document.getElementById('tab-' + tab).classList.add('active');
+  activeTab = tab;
+  document.querySelectorAll('.ot').forEach(b => b.classList.toggle('active', b.dataset.tab === tab));
+  document.getElementById('stdin-wrap').style.display = tab === 'stdin' ? 'flex' : 'none';
+
+  if (tab === 'output') {
+    if (currentLang.mode === 'html') {
+      const f = document.getElementById('html-frame');
+      if (f.srcdoc || f.src) { f.style.display = 'block'; document.getElementById('console').style.display = 'none'; }
+      else { document.getElementById('console').style.display = 'block'; }
+    } else {
+      document.getElementById('console').style.display = 'block';
+      document.getElementById('html-frame').style.display = 'none';
+    }
+  } else {
+    document.getElementById('console').style.display = 'none';
+    document.getElementById('html-frame').style.display = 'none';
+  }
 }
 
-// ── Auto-resize textarea ───────────────────────────────────────────
-const ta = document.getElementById('code-input');
-ta.addEventListener('input', () => {
-  ta.style.height = 'auto';
-  ta.style.height = Math.max(200, ta.scrollHeight) + 'px';
-});
-</script>
+// ── Run ──────────────────────────────────────────────────────────────────────
+document.getElementById('btn-run').onclick = runCode;
+document.getElementById('btn-copy').onclick = () => {
+  const code = editor ? editor.getValue() : '';
+  navigator.clipboard?.writeText(code).catch(()=>{});
+};
+document.getElementById('btn-reset').onclick = () => {
+  if (editor) editor.setValue(currentLang.code);
+  resetOutput();
+};
 
+async function runCode() {
+  if (running || !editor) return;
+  const code = editor.getValue().trim();
+  if (!code) return;
+  if (code.length > 50000) { showError('Kod hajmi chegaradan oshdi (max 50KB)'); return; }
+
+  running = true;
+  setRunning(true);
+  showTab('output');
+  resetOutput();
+
+  const t0 = performance.now();
+  try {
+    if (currentLang.mode === 'html')   { await runHTML(code, t0); }
+    else if (currentLang.mode === 'js'){ await runJS(code, t0); }
+    else                               { await runPiston(code, t0); }
+  } catch(e) {
+    showError('⛔ ' + (e?.message || String(e)));
+    setDot('err');
+    setStatus('<span class="s-err">✕ Xatolik</span>');
+    setExecTime(performance.now() - t0);
+  }
+  running = false;
+  setRunning(false);
+}
+
+function runHTML(code, t0) {
+  const f = document.getElementById('html-frame');
+  document.getElementById('console').style.display = 'none';
+  f.style.display = 'block';
+  f.srcdoc = code;
+  setDot('ok');
+  setStatus('<span class="s-ok">✓ Muvaffaqiyatli</span>');
+  setExecTime(performance.now() - t0);
+  return Promise.resolve();
+}
+
+function runJS(code, t0) {
+  return new Promise(resolve => {
+    const lines = [];
+    let done = false;
+
+    const SANDBOX = 'data:text/html,' + encodeURIComponent(
+      '<!DOCTYPE html><html><body><script>' +
+      '(function(){' +
+      'function fmt(a){return[].slice.call(a).map(function(x){' +
+      'if(x===null)return"null";if(x===undefined)return"undefined";' +
+      'if(typeof x==="object"){try{return JSON.stringify(x,null,2);}catch(e){return String(x);}}' +
+      'return String(x);}).join(" ");}' +
+      'var L=console.log,W=console.warn,E=console.error,I=console.info;' +
+      'console.log=function(){parent.postMessage({k:"log",t:fmt(arguments)},"*");};' +
+      'console.warn=function(){parent.postMessage({k:"warn",t:fmt(arguments)},"*");};' +
+      'console.error=function(){parent.postMessage({k:"error",t:fmt(arguments)},"*");};' +
+      'console.info=function(){parent.postMessage({k:"info",t:fmt(arguments)},"*");};' +
+      'window.onerror=function(m,s,l){parent.postMessage({k:"error",t:"⛔ "+m+" (satir "+l+")"},"*");return true;};' +
+      'window.addEventListener("message",function(e){' +
+      'if(!e.data||e.data.type!=="run")return;' +
+      'try{(new Function(e.data.code))();}' +
+      'catch(err){parent.postMessage({k:"error",t:"⛔ "+err.toString()},"*");}' +
+      'parent.postMessage({type:"done"},"*");});' +
+      'parent.postMessage({type:"ready"},"*");' +
+      '})();' +
+      '<\/script></body></html>'
+    );
+
+    const iframe = document.createElement('iframe');
+    iframe.setAttribute('sandbox', 'allow-scripts allow-same-origin');
+    iframe.style.cssText = 'display:none;position:fixed;top:-9999px';
+    document.body.appendChild(iframe);
+    iframe.src = SANDBOX;
+
+    const finish = () => {
+      if (done) return;
+      done = true;
+      window.removeEventListener('message', onMsg);
+      if (document.body.contains(iframe)) document.body.removeChild(iframe);
+      const ms = performance.now() - t0;
+      const hasErr = lines.some(l => l.k === 'error');
+      renderLines(lines);
+      setDot(hasErr ? 'err' : 'ok');
+      setStatus(hasErr ? '<span class="s-err">✕ Xatolik</span>' : '<span class="s-ok">✓ Muvaffaqiyatli</span>');
+      setExecTime(ms);
+      setExitBadge(hasErr ? 1 : 0);
+      resolve();
+    };
+
+    const onMsg = e => {
+      if (e.source !== iframe.contentWindow) return;
+      const d = e.data;
+      if (!d) return;
+      if (d.type === 'ready') iframe.contentWindow.postMessage({ type: 'run', code }, '*');
+      else if (d.type === 'done') finish();
+      else if (d.k) lines.push(d);
+    };
+    window.addEventListener('message', onMsg);
+    setTimeout(() => { if (!done) { lines.push({k:'error',t:'⏱ Timeout: 5 soniyadan oshdi'}); finish(); } }, 5000);
+  });
+}
+
+async function runPiston(code, t0) {
+  const stdin = document.getElementById('stdin-input').value;
+  const body = { language: currentLang.piston, version: '*', files: [{ content: code }], compile_timeout: 10000, run_timeout: 5000 };
+  if (stdin.trim()) body.stdin = stdin;
+
+  const resp = await fetch(PISTON, { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(body) });
+  const ms = performance.now() - t0;
+  if (!resp.ok) throw new Error('Server xatoligi: ' + resp.status);
+  const data = await resp.json();
+
+  const lines = [];
+  if (data.compile?.stderr) lines.push({ k:'stderr', t:'🔨 Kompilyatsiya xatoligi:\n' + data.compile.stderr.trim() });
+  const run = data.run ?? data;
+  if (run?.stdout) run.stdout.trimEnd().split('\n').forEach(t => lines.push({k:'stdout',t}));
+  if (run?.stderr) run.stderr.trimEnd().split('\n').forEach(t => lines.push({k:'stderr',t}));
+  if (!lines.length) lines.push({k:'system', t:"Chiqish yo'q"});
+
+  const code0 = run?.code ?? 0;
+  const hasErr = (data.compile && data.compile.code !== 0) || code0 !== 0;
+
+  renderLines(lines);
+  setDot(hasErr ? 'err' : 'ok');
+  setStatus(hasErr ? '<span class="s-err">✕ Xatolik</span><span class="s-sec"> 🔒 Xavfsiz</span>'
+                   : '<span class="s-ok">✓ Muvaffaqiyatli</span><span class="s-sec"> 🔒 Xavfsiz</span>');
+  setExecTime(ms);
+  setExitBadge(code0);
+  if (data.version) {
+    const ver = document.createElement('span');
+    ver.id = 'sb-ver'; ver.textContent = ' v' + data.version;
+    document.getElementById('sb-lang').appendChild(ver);
+  }
+}
+
+// ── Helpers ──────────────────────────────────────────────────────────────────
+function renderLines(lines) {
+  const con = document.getElementById('console');
+  const kindToGlyph = { stderr:'✕', error:'✕', warn:'⚠', info:'i', system:'·' };
+  const kindToClass = { stdout:'stdout', log:'log', stderr:'stderr', error:'error', warn:'warn', info:'info', system:'system' };
+  con.innerHTML = '';
+  lines.forEach(l => {
+    const d = document.createElement('div');
+    d.className = 'line';
+    const g = document.createElement('span');
+    g.className = 'lg';
+    g.textContent = kindToGlyph[l.k] || '>';
+    const t = document.createElement('pre');
+    t.className = 'lt2 ' + (kindToClass[l.k] || 'log');
+    t.textContent = l.t;
+    d.appendChild(g);
+    d.appendChild(t);
+    con.appendChild(d);
+  });
+  con.scrollTop = con.scrollHeight;
+}
+
+function showError(msg) {
+  renderLines([{ k: 'error', t: msg }]);
+}
+
+function resetOutput() {
+  const con = document.getElementById('console');
+  con.innerHTML = '<p class="chint">▶ Ishga tushirish tugmasini bosing yoki <kbd>Ctrl+Enter</kbd></p>';
+  document.getElementById('html-frame').style.display = 'none';
+  document.getElementById('html-frame').srcdoc = '';
+  con.style.display = 'block';
+  document.getElementById('badge-time').style.display = 'none';
+  document.getElementById('badge-exit').style.display = 'none';
+  setDot('');
+  setStatus('<span class="s-idle">Tayyor</span>');
+  const ver = document.getElementById('sb-ver');
+  if (ver) ver.remove();
+}
+
+function setRunning(on) {
+  const btn = document.getElementById('btn-run');
+  btn.disabled = on;
+  btn.innerHTML = on ? '<span class="spin"></span>Ishlayapti…' : '▶ Ishga tushirish';
+  if (on) { setDot('run'); setStatus('<span class="s-run">Ijro etilmoqda…</span>'); }
+}
+
+function setDot(cls) {
+  const d = document.getElementById('status-dot');
+  d.className = cls ? 'dot-' + cls : '';
+  d.style.background = cls === 'run' ? '#fab387' : cls === 'ok' ? '#a6e3a1' : cls === 'err' ? '#f38ba8' : '#45475a';
+  if (cls === 'run') d.style.animation = 'blink .7s ease-in-out infinite alternate';
+  else d.style.animation = '';
+}
+
+function setStatus(html) {
+  document.getElementById('sb-state').innerHTML = html;
+}
+
+function setExecTime(ms) {
+  const b = document.getElementById('badge-time');
+  b.textContent = ms < 1000 ? ms.toFixed(0) + 'ms' : (ms/1000).toFixed(1) + 's';
+  b.style.display = '';
+}
+
+function setExitBadge(code) {
+  const b = document.getElementById('badge-exit');
+  b.textContent = 'exit ' + code;
+  b.className = 'badge ' + (code === 0 ? 'badge-ok' : 'badge-err');
+  b.style.display = '';
+}
+</script>
 </body>
 </html>
