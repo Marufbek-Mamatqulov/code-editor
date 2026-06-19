@@ -18,11 +18,14 @@ interface LangDef {
   icon: string
   mode: ExecMode
   pistonLang?: string
+  pistonVersion?: string
+  pistonFile?: string  // custom filename (e.g. Main.java for Java)
   defaultCode: string
 }
 
 // ── Constants ──────────────────────────────────────────────────────────────────
-const PISTON_URL = 'https://emkc.org/api/v2/piston/execute'
+// Vercel serverless function → VPS Piston (self-hosted at 31.220.86.100:2000)
+const PISTON_URL = '/api/execute'
 const MAX_CODE = 50_000
 
 // Sandboxed JS runner — injected as srcdoc, code sent via postMessage
@@ -140,7 +143,7 @@ console.log('Reyting:');
   );`,
   },
   {
-    id: 'typescript', label: 'TypeScript', monacoLang: 'typescript', color: '#3178c6', icon: '🔷', mode: 'piston', pistonLang: 'typescript',
+    id: 'typescript', label: 'TypeScript', monacoLang: 'typescript', color: '#3178c6', icon: '🔷', mode: 'piston', pistonLang: 'typescript', pistonVersion: '5.0.3',
     defaultCode: `// TypeScript — interfeyslar va generiklar
 
 interface Student {
@@ -171,7 +174,7 @@ topStudents(students, 75).forEach((s, i) =>
 );`,
   },
   {
-    id: 'python', label: 'Python', monacoLang: 'python', color: '#3572a5', icon: '🐍', mode: 'piston', pistonLang: 'python',
+    id: 'python', label: 'Python', monacoLang: 'python', color: '#3572a5', icon: '🐍', mode: 'piston', pistonLang: 'python', pistonVersion: '3.12.0',
     defaultCode: `# Python — algoritmlar va ro'yxatlar
 
 def bubble_sort(arr):
@@ -204,7 +207,7 @@ for i, (name, g) in enumerate(sorted(students, key=lambda x: -x[1]), 1):
     print(f"  {i}. {name:<8} {g}  ({status(g)})")`,
   },
   {
-    id: 'java', label: 'Java', monacoLang: 'java', color: '#b07219', icon: '☕', mode: 'piston', pistonLang: 'java',
+    id: 'java', label: 'Java', monacoLang: 'java', color: '#b07219', icon: '☕', mode: 'piston', pistonLang: 'java', pistonVersion: '15.0.2', pistonFile: 'Main.java',
     defaultCode: `import java.util.*;
 
 public class Main {
@@ -241,7 +244,7 @@ public class Main {
 }`,
   },
   {
-    id: 'c', label: 'C', monacoLang: 'c', color: '#555555', icon: '⚙️', mode: 'piston', pistonLang: 'c',
+    id: 'c', label: 'C', monacoLang: 'c', color: '#555555', icon: '⚙️', mode: 'piston', pistonLang: 'gcc', pistonVersion: '10.2.0', pistonFile: 'prog.c',
     defaultCode: `#include <stdio.h>
 #include <math.h>
 
@@ -282,7 +285,7 @@ int main() {
 }`,
   },
   {
-    id: 'cpp', label: 'C++', monacoLang: 'cpp', color: '#f34b7d', icon: '🔩', mode: 'piston', pistonLang: 'c++',
+    id: 'cpp', label: 'C++', monacoLang: 'cpp', color: '#f34b7d', icon: '🔩', mode: 'piston', pistonLang: 'gcc', pistonVersion: '10.2.0', pistonFile: 'prog.cpp',
     defaultCode: `#include <iostream>
 #include <vector>
 #include <algorithm>
@@ -323,7 +326,7 @@ int main() {
 }`,
   },
   {
-    id: 'go', label: 'Go', monacoLang: 'go', color: '#00add8', icon: '🔵', mode: 'piston', pistonLang: 'go',
+    id: 'go', label: 'Go', monacoLang: 'go', color: '#00add8', icon: '🔵', mode: 'piston', pistonLang: 'go', pistonVersion: '1.16.2',
     defaultCode: `package main
 
 import (
@@ -367,7 +370,7 @@ func main() {
 }`,
   },
   {
-    id: 'rust', label: 'Rust', monacoLang: 'rust', color: '#dea584', icon: '🦀', mode: 'piston', pistonLang: 'rust',
+    id: 'rust', label: 'Rust', monacoLang: 'rust', color: '#dea584', icon: '🦀', mode: 'piston', pistonLang: 'rust', pistonVersion: '1.68.2',
     defaultCode: `fn status(g: i32) -> &'static str {
     match g {
         90..=100 => "A'lo",
@@ -398,7 +401,7 @@ fn main() {
 }`,
   },
   {
-    id: 'php', label: 'PHP', monacoLang: 'php', color: '#4f5d95', icon: '🐘', mode: 'piston', pistonLang: 'php',
+    id: 'php', label: 'PHP', monacoLang: 'php', color: '#4f5d95', icon: '🐘', mode: 'piston', pistonLang: 'php', pistonVersion: '8.2.3',
     defaultCode: `<?php
 
 function status(int $g): string {
@@ -429,7 +432,7 @@ foreach ($students as $i => $s) {
 }`,
   },
   {
-    id: 'ruby', label: 'Ruby', monacoLang: 'ruby', color: '#cc342d', icon: '💎', mode: 'piston', pistonLang: 'ruby',
+    id: 'ruby', label: 'Ruby', monacoLang: 'ruby', color: '#cc342d', icon: '💎', mode: 'piston', pistonLang: 'ruby', pistonVersion: '3.0.1',
     defaultCode: `# Ruby — hash va massivlar
 
 def status(g)
@@ -457,7 +460,7 @@ students.sort_by { |s| -s[:grade] }.each_with_index do |s, i|
 end`,
   },
   {
-    id: 'bash', label: 'Bash', monacoLang: 'shell', color: '#89e051', icon: '📟', mode: 'piston', pistonLang: 'bash',
+    id: 'bash', label: 'Bash', monacoLang: 'shell', color: '#89e051', icon: '📟', mode: 'piston', pistonLang: 'bash', pistonVersion: '5.2.0',
     defaultCode: `#!/bin/bash
 echo "=== Bash misoli ==="
 
@@ -580,10 +583,11 @@ const CodeEditor: React.FC = () => {
 
   // ── Piston API runner ────────────────────────────────────────────────────────
   const runPiston = async (code: string, t0: number) => {
+    const fileName = lang.pistonFile ?? 'code'
     const body: Record<string, unknown> = {
       language: lang.pistonLang,
-      version: '*',
-      files: [{ content: code }],
+      version: lang.pistonVersion ?? '*',
+      files: [{ name: fileName, content: code }],
       compile_timeout: 10000,
       run_timeout: 5000,
     }
