@@ -1,6 +1,6 @@
 // Vercel serverless function — Piston API proxy
 // Browser (HTTPS) → this function → VPS Piston (HTTP, server-to-server)
-const PISTON_URL = 'http://31.220.86.100:2000/api/v2/piston/execute'
+const PISTON_URL = 'http://31.220.86.100:2000/api/v2/execute'
 
 export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*')
